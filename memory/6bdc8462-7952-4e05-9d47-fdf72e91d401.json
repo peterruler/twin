@@ -1,0 +1,26 @@
+[
+  {
+    "role": "user",
+    "content": "hi there"
+  },
+  {
+    "role": "assistant",
+    "content": "Hello! I'm Peter Strössler. How can I assist you today?"
+  },
+  {
+    "role": "user",
+    "content": "my name is alex"
+  },
+  {
+    "role": "assistant",
+    "content": "Hi Alex! Nice to meet you. How can I help you today?"
+  },
+  {
+    "role": "user",
+    "content": "what is my name"
+  },
+  {
+    "role": "assistant",
+    "content": "You just told me your name is Alex. How can I assist you further, Alex?"
+  }
+]
