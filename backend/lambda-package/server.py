@@ -115,36 +115,38 @@ def save_conversation(session_id: str, messages: List[Dict]):
             json.dump(messages, f, indent=2)
 
 
-def call_bedrock(conversation: List[Dict], user_message: str) -> str:
-    """Call AWS Bedrock with conversation history"""
-    
-    # Build messages in Bedrock format
-    messages = []
-    
-    # Add system prompt as first user message
-    # Or there's a better way to do this - pass in system=[{"text": prompt()}] to the converse call below
-    messages.append({
-        "role": "user", 
-        "content": [{"text": f"System: {prompt()}"}]
-    })
-    
-    # Add conversation history (limit to last 25 exchanges)
+def build_bedrock_messages(conversation: List[Dict], user_message: str) -> List[Dict]:
+    """Build a Bedrock-compatible alternating message list."""
+    messages: List[Dict] = []
+
     for msg in conversation[-50:]:
+        role = msg.get("role")
+        content = msg.get("content")
+        if role not in {"user", "assistant"} or not content:
+            continue
+
         messages.append({
-            "role": msg["role"],
-            "content": [{"text": msg["content"]}]
+            "role": role,
+            "content": [{"text": content}]
         })
-    
-    # Add current user message
+
     messages.append({
         "role": "user",
         "content": [{"text": user_message}]
     })
+
+    return messages
+
+
+def call_bedrock(conversation: List[Dict], user_message: str) -> str:
+    """Call AWS Bedrock with conversation history"""
+    messages = build_bedrock_messages(conversation, user_message)
     
     try:
         # Call Bedrock using the converse API
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
+            system=[{"text": prompt()}],
             messages=messages,
             inferenceConfig={
                 "maxTokens": 2000,
@@ -159,9 +161,8 @@ def call_bedrock(conversation: List[Dict], user_message: str) -> str:
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ValidationException':
-            # Handle message format issues
             print(f"Bedrock validation error: {e}")
-            raise HTTPException(status_code=400, detail="Invalid message format for Bedrock")
+            raise HTTPException(status_code=400, detail=str(e))
         elif error_code == 'AccessDeniedException':
             print(f"Bedrock access denied: {e}")
             raise HTTPException(status_code=403, detail="Access denied to Bedrock model")

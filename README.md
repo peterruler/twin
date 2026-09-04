@@ -57,3 +57,7 @@ Hinweis: Das Frontend sendet aktuell Requests an eine deployte API-URL in `front
 ### Bedrock Day 3 Demo
 
 ![Bedrock Day 3 Demo](./bedrock.png)
+
+### Terraform Day 4 Demo
+
+![Terraform Day 4 Demo](./terraform.png)

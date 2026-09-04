@@ -112,7 +112,9 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
-    if isinstance(retval, ArrayObject) and (length := len(retval)) != 4:
+    if not isinstance(retval, ArrayObject):
+        raise ValueError(f"Expected an array of four values for {name}, got {retval}")
+    if (length := len(retval)) != 4:
         if length > 4:
             # Keep backwards-compatibility with files previously written in a
             # broken way by pypdf, which carried more than four values.
@@ -128,12 +130,19 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
                 f"Expected four values for {name}, got {length}: {retval}"
             )
     else:
-        retval = RectangleObject(retval)  # type: ignore[arg-type]
+        retval = RectangleObject(retval)
     _set_rectangle(self, name, retval)
     return retval
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+    if isinstance(value, (list, tuple)) and len(value) < 4:
+        # The getter tolerates more than four values for backwards compatibility
+        # but cannot do anything with fewer, so writing them would produce a page
+        # whose box cannot be read back.
+        raise ValueError(
+            f"Expected four values for {name}, got {len(value)}: {value}"
+        )
     self[NameObject(name)] = value
 
 
@@ -645,8 +654,8 @@ class PageObject(DictionaryObject):
         lst: list[Union[str, list[str]]] = []
         if (
                 PG.RESOURCES not in obj or
-                is_null_or_none(resources := obj[PG.RESOURCES]) or
-                RES.XOBJECT not in cast(DictionaryObject, resources)
+                is_null_or_none(resources := cast(DictionaryObject, obj[PG.RESOURCES])) or
+                RES.XOBJECT not in resources
         ):
             # Forms without XObject resources have no images inside them
             if len(ancest) > 0:
@@ -654,20 +663,28 @@ class PageObject(DictionaryObject):
             # for inline images, cache dict entries are not None
             return [image_name for image_name, image_value in self._content_stream_images.items() if image_value]
 
-        x_object = resources[RES.XOBJECT].get_object()  # type: ignore
+        x_object = resources[RES.XOBJECT].get_object()
+        if not isinstance(x_object, DictionaryObject):
+            logger_warning(
+                "XObject resources are not a dictionary: %(x_object)s",
+                source=__name__,
+                x_object=x_object,
+            )
+            return []
 
         # Iterate through all XObject resources
         for o in x_object:
+            entry = x_object[o]
             # Skip non-stream objects (only process StreamObject)
-            if not isinstance(x_object[o], StreamObject):
+            if not isinstance(entry, StreamObject):
                 continue
-            if x_object[o][ImageAttributes.SUBTYPE] == "/Image":
+            if entry.get(ImageAttributes.SUBTYPE, "") == "/Image":
                 # If it's an image, add it to lst for further processing
                 lst.append(o if len(ancest) == 0 else [*ancest, o])
             else:
                 # If it's a form, recursively search for images inside it
                 # Forms may contain images that are Do-referenced in their content stream
-                lst.extend(self._get_ids_image(x_object[o], [*ancest, o], call_stack))
+                lst.extend(self._get_ids_image(entry, [*ancest, o], call_stack))
 
         # Removes duplicates and preserves order
         deduplicated = lst.copy()
@@ -2055,7 +2072,9 @@ class PageObject(DictionaryObject):
             resources_dict: Any = obj.get(PG.RESOURCES, {})
             if "/Font" in resources_dict and self.pdf is not None:
                 for font_name in resources_dict["/Font"]:
-                    fonts[font_name] = Font.from_font_resource(resources_dict["/Font"][font_name])
+                    fonts[font_name] = Font.from_font_resource(
+                        resources_dict["/Font"][font_name].get_object()
+                    )
 
             if "/Parent" not in obj:
                 break
