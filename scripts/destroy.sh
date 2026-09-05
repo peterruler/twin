@@ -18,6 +18,19 @@ echo "🗑️ Preparing to destroy ${PROJECT_NAME}-${ENVIRONMENT} infrastructure
 # Navigate to terraform directory
 cd "$(dirname "$0")/../terraform"
 
+# Get AWS Account ID and Region for backend configuration
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=${DEFAULT_AWS_REGION:-us-east-1}
+
+# Initialize terraform with S3 backend
+echo "🔧 Initializing Terraform with S3 backend..."
+terraform init -input=false \
+  -backend-config="bucket=twin-terraform-state-${AWS_ACCOUNT_ID}" \
+  -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
+  -backend-config="region=${AWS_REGION}" \
+  -backend-config="dynamodb_table=twin-terraform-locks" \
+  -backend-config="encrypt=true"
+
 # Check if workspace exists
 if ! terraform workspace list | grep -q "$ENVIRONMENT"; then
     echo "❌ Error: Workspace '$ENVIRONMENT' does not exist"
@@ -31,10 +44,7 @@ terraform workspace select "$ENVIRONMENT"
 
 echo "📦 Emptying S3 buckets..."
 
-# Get AWS Account ID for bucket names
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-
-# Get bucket names with account ID
+# Get bucket names with account ID (matching Day 4 naming)
 FRONTEND_BUCKET="${PROJECT_NAME}-${ENVIRONMENT}-frontend-${AWS_ACCOUNT_ID}"
 MEMORY_BUCKET="${PROJECT_NAME}-${ENVIRONMENT}-memory-${AWS_ACCOUNT_ID}"
 
@@ -55,6 +65,12 @@ else
 fi
 
 echo "🔥 Running terraform destroy..."
+
+# Create a dummy lambda zip if it doesn't exist (needed for destroy in GitHub Actions)
+if [ ! -f "../backend/lambda-deployment.zip" ]; then
+    echo "Creating dummy lambda package for destroy operation..."
+    echo "dummy" | zip ../backend/lambda-deployment.zip -
+fi
 
 # Run terraform destroy with auto-approve
 if [ "$ENVIRONMENT" = "prod" ] && [ -f "prod.tfvars" ]; then
