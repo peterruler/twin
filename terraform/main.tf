@@ -46,8 +46,8 @@ resource "aws_iam_role" "github_actions" {
           }
           StringLike = {
             "token.actions.githubusercontent.com:sub" = [
-              "repo:${var.github_repository}:ref:refs/heads/main",
-              "repo:${var.github_repository}:environment:*"
+              "repo:peterruler@559492/twin@1352703764:ref:refs/heads/main",
+              "repo:peterruler@559492/twin@1352703764:environment:*"
             ]
           }
         }
@@ -256,10 +256,11 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      S3_BUCKET        = aws_s3_bucket.memory.id
-      USE_S3           = "true"
-      BEDROCK_MODEL_ID = var.bedrock_model_id
+      CORS_ORIGINS       = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      DEFAULT_AWS_REGION = var.aws_region
+      S3_BUCKET          = aws_s3_bucket.memory.id
+      USE_S3             = "true"
+      BEDROCK_MODEL_ID   = var.bedrock_model_id
     }
   }
 

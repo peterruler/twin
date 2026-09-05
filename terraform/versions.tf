@@ -10,7 +10,7 @@ terraform {
 }
 
 provider "aws" {
-  # Uses AWS CLI configuration (aws configure)
+  region = var.aws_region
 }
 
 provider "aws" {

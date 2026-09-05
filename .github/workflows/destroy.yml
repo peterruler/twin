@@ -19,6 +19,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  DEFAULT_AWS_REGION: eu-central-2
+
 jobs:
   destroy:
     name: Destroy ${{ github.event.inputs.environment }}
@@ -44,7 +47,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::758808001330:role/github-actions-twin-deploy
           role-session-name: github-actions-destroy
-          aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+          aws-region: ${{ env.DEFAULT_AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -55,7 +58,7 @@ jobs:
         run: |
           # Set environment variables for the script
           export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-          export DEFAULT_AWS_REGION=${{ secrets.DEFAULT_AWS_REGION }}
+          export DEFAULT_AWS_REGION=${{ env.DEFAULT_AWS_REGION }}
           
           # Make script executable and run it
           chmod +x scripts/destroy.sh

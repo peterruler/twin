@@ -13,6 +13,12 @@ variable "github_repository" {
   default     = "peterruler/twin"
 }
 
+variable "aws_region" {
+  description = "AWS region for application resources and remote state"
+  type        = string
+  default     = "eu-central-2"
+}
+
 variable "environment" {
   description = "Environment name (dev, test, prod)"
   type        = string
