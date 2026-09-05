@@ -117,3 +117,7 @@ Der vollständige Day-5-Deploy wurde erfolgreich getestet. Dabei liefen AWS-OIDC
 ### Deployed Avatar Day 5 Demo
 
 ![Deployed Avatar Day 5 Demo](./avatar-screen.png)
+
+### Avatar Chat Response Day 5 Demo
+
+![Avatar Chat Response Day 5 Demo](./avatar-screen2.png)
