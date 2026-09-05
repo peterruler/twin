@@ -40,8 +40,8 @@ app.add_middleware(
 
 # Initialize Bedrock client - see Q42 on https://edwarddonner.com/faq if the Region gives you problems
 bedrock_client = boto3.client(
-    service_name="bedrock-runtime", 
-    region_name=os.getenv("DEFAULT_AWS_REGION", "eu-central-2")
+    service_name="bedrock-runtime",
+    region_name=os.getenv("BEDROCK_REGION", "eu-central-1")
 )
 
 # Bedrock model selection - see Q42 on https://edwarddonner.com/faq for more

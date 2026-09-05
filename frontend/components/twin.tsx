@@ -51,7 +51,10 @@ export default function Twin() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to send message');
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                throw new Error(errorBody?.detail || `Request failed (${response.status})`);
+            }
 
             const data = await response.json();
 
