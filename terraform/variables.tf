@@ -7,6 +7,12 @@ variable "project_name" {
   }
 }
 
+variable "github_repository" {
+  description = "GitHub repository in owner/name format used for OIDC trust"
+  type        = string
+  default     = "peterruler/twin"
+}
+
 variable "environment" {
   description = "Environment name (dev, test, prod)"
   type        = string
