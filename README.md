@@ -113,3 +113,7 @@ Der vollständige Day-5-Deploy wurde erfolgreich getestet. Dabei liefen AWS-OIDC
 ### GitHub Actions Day 5 Demo
 
 ![GitHub Actions Day 5 Demo](./github-actions.png)
+
+### Deployed Avatar Day 5 Demo
+
+![Deployed Avatar Day 5 Demo](./avatar-screen.png)
